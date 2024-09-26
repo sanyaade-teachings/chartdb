@@ -41,6 +41,7 @@ import type { DBTable } from '@/lib/domain/db-table';
 import {
     adjustTablePositions,
     shouldShowTablesBySchemaFilter,
+    shouldReorderTables,
 } from '@/lib/domain/db-table';
 import { useLocalConfig } from '@/hooks/use-local-config';
 import {
@@ -99,6 +100,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialTables }) => {
     const nodeTypes = useMemo(() => ({ table: TableNode }), []);
     const edgeTypes = useMemo(() => ({ 'table-edge': TableEdge }), []);
     const [isInitialLoadingNodes, setIsInitialLoadingNodes] = useState(true);
+    const [shouldReorder, setShouldReorder] = useState(false);
 
     const [nodes, setNodes, onNodesChange] = useNodesState<TableNodeType>(
         initialTables.map((table) => tableToTableNode(table, filteredSchemas))
@@ -208,6 +210,13 @@ export const Canvas: React.FC<CanvasProps> = ({ initialTables }) => {
             tables.map((table) => tableToTableNode(table, filteredSchemas))
         );
     }, [tables, setNodes, filteredSchemas]);
+
+    useEffect(() => {
+        const visibleTables = tables.filter((table) =>
+            shouldShowTablesBySchemaFilter(table, filteredSchemas)
+        );
+        setShouldReorder(shouldReorderTables(visibleTables));
+    }, [tables, filteredSchemas]);
 
     const onConnectHandler = useCallback(
         async (params: AddEdgeParams) => {
@@ -404,10 +413,16 @@ export const Canvas: React.FC<CanvasProps> = ({ initialTables }) => {
                                 <span>
                                     <Button
                                         variant="secondary"
-                                        className="size-8 p-1 shadow-none"
+                                        className={`size-8 p-1 shadow-none ${
+                                            shouldReorder
+                                                ? 'bg-pink-600 hover:bg-pink-500'
+                                                : ''
+                                        }`}
                                         onClick={showReorderConfirmation}
                                     >
-                                        <LayoutGrid className="size-4" />
+                                        <LayoutGrid
+                                            className={`size-4 ${shouldReorder ? 'text-white' : ''}`}
+                                        />
                                     </Button>
                                 </span>
                             </TooltipTrigger>
